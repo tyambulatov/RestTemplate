@@ -1,228 +1,171 @@
 package org.example.servlet;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.google.gson.Gson;
-import org.example.config.Config;
 import org.example.model.User;
-import org.example.repository.UserRepository;
 import org.example.repository.impl.UserRepositoryImpl;
-import org.example.repository.mapper.UserResultSetMapper;
-import org.example.repository.mapper.impl.UserResultSetMapperImpl;
 import org.example.service.UserService;
 import org.example.service.impl.UserServiceImpl;
 
-import javax.sql.DataSource;
 import java.io.IOException;
-
-import java.io.PrintWriter;
 import java.io.Serial;
-import java.util.Collection;
-import java.util.Properties;
+import java.util.List;
 
-import static org.example.config.Config.configHikariDataSource;
-import static org.example.config.Config.configProperties;
-
-
-@WebServlet("/users")
+@WebServlet(name = "UserServlet", value = "/users")
 public class UserServlet extends HttpServlet {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final UserService userService;
+    private final UserService userService = new UserServiceImpl(new UserRepositoryImpl());
+    private final ObjectMapper mapper = new ObjectMapper();
 
-//    private Gson _gson = null;
-//
-    public UserServlet() {
-        super();
 
-        Config config = new Config();
-        UserRepository<User, Long> userRepository = config.getUserRepository();
-        userService = new UserServiceImpl(userRepository);
-
-//        _gson = new Gson();
-    }
-
-    //a utility method to send an object
-    //as JSON response
-//    private void sendAsJson(
-//            HttpServletResponse response,
-//            Object obj) throws IOException {
-//
-//        response.setContentType("application/json");
-//
-//        String res = _gson.toJson(obj);
-//
-//        PrintWriter out = response.getWriter();
-//
-//        out.print(res);
-//        out.flush();
-//    }
-
-    // Get models
-    // GET/JavaViewer/users/
-    // GET/JavaViewer/users/id
     public void doGet(
             HttpServletRequest request,
             HttpServletResponse response)
             throws ServletException, IOException {
 
-//        response.setContentType("application/json");
-//        response.getWriter().write("Testing");
-        User user = userService.findById(1L);
-//        System.out.println(user.getName());
-        response.getWriter().write(user.getName());
+        response.setContentType("application/json");
+        try {
+            String id = request.getParameter("id");
 
-//        String pathInfo = request.getPathInfo();
-//
-//        if(pathInfo == null || pathInfo.equals("/")){
-//
-//            Collection<User> users = userService.findAll();
-//
-//            sendAsJson(response, users);
-//        }
-//
-//        String[] splits = pathInfo.split("/");
-//
-//        if(splits.length != 2) {
-//
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        Long userId = Long.parseLong(splits[1]);
-//
-//        User user = userService.findById(userId);
-//
-//        if(user == null) {
-//            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-//            return;
-//        }
-//
-//        sendAsJson(response, user);
+            if (id == null) {
+                writeEmptyId(response);
+            } else if (id.equals("all")) {
+                writeAllUsers(response);
+            } else {
+                writeUserById(response, id);
+            }
+
+        } catch (NullPointerException | NumberFormatException e) {
+            response.getWriter().write("id unknown");
+            response.setStatus(400);
+        } finally {
+            response.getWriter().close();
+        }
     }
-//
-//    // Adds new model in DB
-//    // POST/JavaViewer/models
-//    protected void doPost(
-//            HttpServletRequest request,
-//            HttpServletResponse response)
-//            throws ServletException, IOException {
-//
-//        String pathInfo = request.getPathInfo();
-//
-//        if(pathInfo == null || pathInfo.equals("/")){
-//
-//            StringBuilder buffer = new StringBuilder();
-//            BufferedReader reader = request.getReader();
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                buffer.append(line);
-//            }
-//
-//            String payload = buffer.toString();
-//
-//            User user = _gson.fromJson(payload, User.class);
-//
-//            userService.save(user);
-//
-//            sendAsJson(response, user);
-//        }
-//        else {
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//        }
-//    }
-//
-//    // Updates a model in DB
-//    // PUT/JavaViewer/models/id
-//    protected void doPut(
-//            HttpServletRequest request,
-//            HttpServletResponse response)
-//            throws IOException, ServletException {
-//
-//        String pathInfo = request.getPathInfo();
-//
-//        if(pathInfo == null || pathInfo.equals("/")){
-//
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        String[] splits = pathInfo.split("/");
-//
-//        if(splits.length != 2) {
-//
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        Long userId = Long.parseLong(splits[1]);
-//
-//        // not contains key
-//
-//        if(userService.hasUser(userId)) {
-//
-//            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-//            return;
-//        }
-//
-//        StringBuilder buffer = new StringBuilder();
-//        BufferedReader reader = request.getReader();
-//        String line;
-//        while ((line = reader.readLine()) != null) {
-//            buffer.append(line);
-//        }
-//
-//        String payload = buffer.toString();
-//
-//        User user = _gson.fromJson(payload, User.class);
-//
-//        user.setId(userId);
-//
-//        // вынести в сервис update
-//        userService.deleteById(userId);
-//        userService.save(user);
-//
-//        sendAsJson(response, user);
-//    }
-//
-//    // Deletes a model in DB
-//    // DELETE/JavaViewer/models/id
-//    protected void doDelete(
-//            HttpServletRequest request,
-//            HttpServletResponse response)
-//            throws IOException, ServletException {
-//
-//        String pathInfo = request.getPathInfo();
-//
-//        if(pathInfo == null || pathInfo.equals("/")){
-//
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        String[] splits = pathInfo.split("/");
-//
-//        if(splits.length != 2) {
-//
-//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        Long userId = Long.parseLong(splits[1]);
-//
-//        User userToDelete = userService.findById(userId);
-//
-//        if(userToDelete == null) {
-//            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-//            return;
-//        }
-//
-//        userService.deleteById(userId);
-//
-//        sendAsJson(response, userToDelete);
-//    }
+
+    private void writeUserById(HttpServletResponse response, String id) throws JsonProcessingException, IOException {
+        User user = userService.findById(Long.parseLong(id));
+        String jsonString = mapper.writeValueAsString(user);
+        response.getWriter().write(jsonString);
+        response.setStatus(200);
+    }
+
+    private void writeAllUsers(HttpServletResponse response) throws JsonProcessingException, IOException {
+        List<User> users = userService.findAll();
+        String jsonString = mapper.writeValueAsString(users);
+        response.getWriter().write(jsonString);
+        response.setStatus(200);
+    }
+
+    private void writeEmptyId(HttpServletResponse response) throws IOException {
+        response.getWriter().write("id must be empty");
+        response.setStatus(400);
+    }
+
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        response.setContentType("application/json");
+        try {
+            String name = request.getParameter("name");
+            if (name == null) {
+                writeEmptyName(response);
+            } else {
+                User updatedUser = updateUser(name);
+                writeUser(response, updatedUser);
+            }
+        } catch (NullPointerException | NumberFormatException e) {
+            response.getWriter().write("user unknown");
+        }
+    }
+
+    private void writeUser(HttpServletResponse response, User updatedUser) throws JsonProcessingException, IOException {
+        String jsonString = mapper.writeValueAsString(updatedUser);
+        response.getWriter().write(jsonString);
+        response.setStatus(200);
+    }
+
+    private User updateUser(String name) {
+        User user = new User();
+        user.setName(name);
+        return userService.save(user);
+    }
+
+    private void writeEmptyName(HttpServletResponse response) throws IOException {
+        response.getWriter().write("name mustn't be empty");
+        response.setStatus(400);
+    }
+
+    public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        response.setContentType("application/json");
+        try {
+            String id = request.getParameter("id");
+
+            if (id == null) {
+                response.getWriter().write("id must not empty");
+                response.setStatus(400);
+            } else {
+                Long longId = Long.valueOf(id);
+
+                String newName = request.getParameter("name");
+
+                if (newName.isBlank() || newName.isEmpty()) {
+                    response.getWriter().write("empty name");
+                } else {
+                    User newUser = new User();
+                    newUser.setId(longId);
+                    newUser.setName(newName);
+
+                    User updatedUser = userService.update(newUser);
+                    String jsonString = mapper.writeValueAsString(updatedUser);
+                    response.getWriter().write(jsonString);
+                    response.setStatus(200);
+                }
+
+            }
+        } catch (NullPointerException | NumberFormatException e) {
+            response.getWriter().write("id unknown");
+            response.setStatus(400);
+        } finally {
+            response.getWriter().close();
+        }
+    }
+
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        response.setContentType("application/json");
+        try {
+            String id = request.getParameter("id");
+
+            if (id == null) {
+                response.getWriter().write("id must not empty");
+                response.setStatus(400);
+            } else if (id.equals("all")) {
+                if (userService.deleteById(Long.valueOf(id))) {
+                    response.getWriter().write("name deleted");
+                    response.setStatus(200);
+                } else {
+                    response.getWriter().write("name wasn't found");
+                    response.setStatus(200);
+                }
+            } else {
+                if (userService.deleteById(Long.valueOf(id))) {
+                    response.getWriter().write("name deleted");
+                    response.setStatus(200);
+                } else {
+                    response.getWriter().write("name wasn't found");
+                    response.setStatus(200);
+                }
+            }
+        } catch (NullPointerException | NumberFormatException e) {
+            response.getWriter().write("id unknown");
+            response.setStatus(400);
+        } finally {
+            response.getWriter().close();
+        }
+    }
 }

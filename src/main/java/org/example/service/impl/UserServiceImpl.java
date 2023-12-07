@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository<User, Long> userRepository;
+    private final UserRepository userRepository;
 
 
     public UserServiceImpl(UserRepository userRepository) {
@@ -38,7 +38,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean hasUser(Long id) {
-        return userRepository.findById(id) != null;
+    public User update(User user) {
+        return userRepository.update(user);
     }
+
+//    @Override
+//    public boolean hasUser(Long id) {
+//        return userRepository.findById(id) != null;
+//    }
 }

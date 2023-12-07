@@ -5,6 +5,9 @@ import org.example.model.User;
 import java.util.List;
 
 public interface UserService {
+    /*
+   Should save only when there is no such User in a db.
+    */
     User save(User user);
 
     User findById(Long id);
@@ -13,5 +16,6 @@ public interface UserService {
 
     List<User> findAll();
 
-    boolean hasUser(Long id);
+    User update(User user);
+
 }

@@ -12,7 +12,6 @@ import java.util.Properties;
 
 public class ConnectionManagerImpl implements ConnectionManager {
 
-    private static String bdDriver;
     private static String dbUrl;
     private static String bdUserName;
     private static String bdPassword;
@@ -46,10 +45,10 @@ public class ConnectionManagerImpl implements ConnectionManager {
     public Connection getConnection() {
         Connection connection = null;
         try {
-            fis = new FileInputStream("src/main/resources/db.properties");
+            fis = new FileInputStream("/home/user/Documents/LinuxStorage/Aston/RestTemplate/src/main/resources/db.properties");
             property.load(fis);
 
-            bdDriver = property.getProperty("db.driver");
+            String bdDriver = property.getProperty("db.driver");
             dbUrl = property.getProperty("db.url");
             bdUserName = property.getProperty("db.username");
             bdPassword = property.getProperty("db.password");
